@@ -14,11 +14,27 @@ def prepare_global_scaler() -> StandardScaler:
 
     return global_scaler
 
+def get_data() -> tuple[np.ndarray, np.ndarray]:
+    X, Y = [], []
+    for i in range(5):
+        tmp = np.load(f"training_data/{i}.npy")
+        X.append(tmp)    
+        for _ in range(len(tmp)):
+            Y.append(i)
+
+    X = np.row_stack(X).reshape(-1, 21*2*20)
+    Y = np.array(Y)
+    
+    return X, Y
+
 def card_to_center_coordinates(card: dict, width_offset: int = 0, height_offset: int = 0, screen_height: int = 1080) -> tuple[int, int]:
     return (
         card["TopLeftX"] + card["Width"]//2 + width_offset,
         screen_height - card["TopLeftY"] + card["Height"]//2 + height_offset
     )
+
+def normalized_to_px(x: float, y: float, width: int = 1920, height: int = 1080) -> tuple[int, int]:
+    return int((1-x)*width), int(y*height)
 
 def landmarks_from_index(ind: int, landmarks: list) -> list:
     if len(landmarks) == 1:

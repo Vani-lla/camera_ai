@@ -11,11 +11,6 @@ from threading import Thread, Event
 
 from helpers import landmarks_from_index, prepare_global_scaler
 
-BaseOptions = mp.tasks.BaseOptions
-HandLandmarker = mp.tasks.vision.HandLandmarker
-HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
-VisionRunningMode = mp.tasks.vision.RunningMode
-
 
 @dataclass
 class HandLandmarks:
@@ -53,6 +48,10 @@ class HandMotions:
         self.global_hands = global_hands
 
         # Hand model options
+        BaseOptions = mp.tasks.BaseOptions
+        HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+        VisionRunningMode = mp.tasks.vision.RunningMode
+
         def result_callback(result, output_image, timestamp_ms) -> None:
             for category in result.handedness:
                 if category[0].category_name == "Left":
@@ -64,7 +63,8 @@ class HandMotions:
                         (lm.x, lm.y) for lm in landmarks_from_index(category[0].index, result.hand_landmarks)
                     ))
         self._landmarker_options = HandLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path='hand_landmarker.task'),
+            base_options=BaseOptions(
+                model_asset_path="models/hand_landmarker.task"),
             num_hands=2,
             running_mode=VisionRunningMode.LIVE_STREAM,
             result_callback=result_callback,
@@ -82,6 +82,7 @@ class HandMotions:
 
             https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/python?hl=en
         """
+        HandLandmarker = mp.tasks.vision.HandLandmarker
         with HandLandmarker.create_from_options(self._landmarker_options) as landmarker:
             while not self._stop_event.is_set():
                 start = time()
@@ -97,7 +98,6 @@ class HandMotions:
                 # Limit FPS
                 if (time_to_sleep := self.frame_duration - time() + start) > 0:
                     sleep(time_to_sleep)
-                # print(self.global_hands.right_hand)
 
     @property
     def status_left(self) -> int:
@@ -117,16 +117,18 @@ class HandMotions:
 
 if __name__ == "__main__":
     from os import system
+    from warnings import filterwarnings
+    filterwarnings("ignore")
 
-    system("cls")
+    system("clear")
     global_hand = HandLandmarks(
         left_hand=deque([[(0.0, 0.0) for _ in range(21)]
                         for _ in range(20)], maxlen=20),
         right_hand=deque([[(0.0, 0.0) for _ in range(21)]
                          for _ in range(20)], maxlen=20)
     )
-
-    hand_motions = HandMotions(0, ("model.h5", "model.h5"), prepare_global_scaler(), global_hand)
+    hand_motions = HandMotions(
+        0, ("models/model.h5", "models/model.h5"), prepare_global_scaler(), global_hand)
     hand_motions.start_camera_loop()
 
     while True:
