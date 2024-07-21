@@ -30,7 +30,7 @@ while run:
 
     win.fill((0, 0, 0))
     hand = StandardScaler().fit_transform(global_hands.right_hand[-1])
-    for x, y in hand:
+    for x, y, _ in hand:
         x_, y_ = np.array(normalized_to_px(
             x, y, width=WIDTH, height=HEIGHT))//10
 

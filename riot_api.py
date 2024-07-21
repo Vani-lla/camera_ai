@@ -17,7 +17,6 @@ class Game:
         self.interval = interval
 
         self.card_json: list[dict] = []
-
         self._thread = Thread(target=self._updater)
 
     def _updater(self) -> None:
