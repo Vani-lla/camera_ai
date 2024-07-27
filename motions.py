@@ -119,9 +119,11 @@ class HandMotions:
 
 
 class SingularMotionRecorder:
-    def __init__(self, camera_id: int, motion_id: int, hand: Literal["Left", "Right"], global_deque: deque[list[float, float, float]]) -> None:
+    def __init__(self, camera_id: int, motion_id: int, singular: bool, hand: Literal["Left", "Right"], global_deque: deque[list[float, float, float]]) -> None:
         self.motion_id = motion_id
         self.hand = hand
+        
+        self.singular = singular
 
         self._camera = cv2.VideoCapture(camera_id)
 
@@ -152,7 +154,10 @@ class SingularMotionRecorder:
         scaller = StandardScaler()
         scaller.fit(self.global_deque[0])
 
-        self._motions.append(list(map(scaller.transform, self.global_deque)))
+        try:
+            self._motions.append(list(map(scaller.transform, self.global_deque)))
+        except RuntimeError:
+            return
 
     def _save_file(self) -> None:
         np.save(
@@ -207,10 +212,13 @@ class SingularMotionRecorder:
                     run = False
 
                 # Save motion
-                if recording == 0:
+                if self.singular:
+                    if recording == 0:
+                        self._record_motion()
+                    if recording >= 0:
+                        recording -= 1
+                else:
                     self._record_motion()
-                if recording >= 0:
-                    recording -= 1
 
                 print(clock.get_fps())
                 clock.tick(20)
@@ -230,15 +238,15 @@ if __name__ == "__main__":
         right_hand=deque([[(0.0, 0.0, 0.0) for _ in range(21)]
                          for _ in range(20)], maxlen=20)
     )
-    # hand_motions = HandMotions(
-    #     0, ("models/model.h5", "models/model.h5"), prepare_global_scaler(), global_hand)
-    # hand_motions.start_camera_loop()
+    hand_motions = HandMotions(
+        0, ("models/model.h5", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
+    hand_motions.start_camera_loop()
 
-    # while True:
-    #     print(hand_motions.status_right)
-    #     sleep(1)
+    while True:
+        print(hand_motions.status_right)
+        sleep(.25)
 
-    x = deque([[(0.0, 0.0, 0.0) for _ in range(21)] for _ in range(20)], maxlen=20)
+    # x = deque([[(0.0, 0.0, 0.0) for _ in range(21)] for _ in range(20)], maxlen=20)
 
-    recorder = SingularMotionRecorder(0, 2, "Right", x)
-    recorder.recording_loop()
+    # recorder = SingularMotionRecorder(0, 2, True, "Right", x)
+    # recorder.recording_loop()

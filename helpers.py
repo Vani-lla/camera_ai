@@ -3,11 +3,11 @@ from sklearn.preprocessing import StandardScaler
 
 def prepare_global_scaler() -> StandardScaler:
     X = []
-    for i in range(5):
-        tmp = np.load(f"training_data/{i}.npy")
+    for i in range(-1, 3):
+        tmp = np.load(f"training_data/motion_{i}.npy")
         X.append(tmp)
 
-    X = np.row_stack(X).reshape(-1, 21*2*20)
+    X = np.row_stack(X).reshape(-1, 21*3*20)
 
     global_scaler = StandardScaler()
     global_scaler.fit(X)
@@ -16,13 +16,14 @@ def prepare_global_scaler() -> StandardScaler:
 
 def get_data() -> tuple[np.ndarray, np.ndarray]:
     X, Y = [], []
-    for i in range(5):
-        tmp = np.load(f"training_data/{i}.npy")
+    for i in range(-1, 3):
+        tmp = np.load(f"training_data/motion_{i}.npy")
         X.append(tmp)    
+        print(tmp.shape)
         for _ in range(len(tmp)):
             Y.append(i)
 
-    X = np.row_stack(X).reshape(-1, 21*2*20)
+    X = np.row_stack(X).reshape(-1, 21*3*20)
     Y = np.array(Y)
     
     return X, Y
