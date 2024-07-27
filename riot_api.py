@@ -33,6 +33,10 @@ class Game:
             except Exception as e:
                 print(f"Error in response: {e}")
 
+    def show_all_cards(self):
+        for card in filter(lambda c: c["LocalPlayer"], self.card_json):
+            print(card["TopLeftX"], card["TopLeftY"])
+
     def start(self) -> None:
         self._thread.start()
 
@@ -62,9 +66,7 @@ game.start()
 while True:
     system("cls")
 
-    print(game.local_player_hand)
-    print(game.local_player_bench)
-    print(game.local_player_select_cards)
+    game.show_all_cards()
 
     print(set(c["TopLeftY"] for c in game.card_json if c["LocalPlayer"]))
 

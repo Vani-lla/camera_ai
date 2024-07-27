@@ -104,7 +104,9 @@ class HandMotions:
 
     @property
     def status_left(self) -> int:
-        return np.argmax(self._model_left(self.global_scaller.transform([self.global_hands.scalled_left_hand.flatten()]).reshape(1, -1), training=False))
+        data = np.array(self.global_hands.left_hand[-1]).flatten()
+        print(data)
+        return np.argmax(self._model_left([data], training=False))
 
     @property
     def status_right(self) -> int:
@@ -119,11 +121,12 @@ class HandMotions:
 
 
 class SingularMotionRecorder:
-    def __init__(self, camera_id: int, motion_id: int, singular: bool, hand: Literal["Left", "Right"], global_deque: deque[list[float, float, float]]) -> None:
+    def __init__(self, camera_id: int, motion_id: int, singular: bool, single_frame_motion: bool, hand: Literal["Left", "Right"], global_deque: deque[list[float, float, float]]) -> None:
         self.motion_id = motion_id
         self.hand = hand
-        
+
         self.singular = singular
+        self.single_frame_motion = single_frame_motion
 
         self._camera = cv2.VideoCapture(camera_id)
 
@@ -155,13 +158,14 @@ class SingularMotionRecorder:
         scaller.fit(self.global_deque[0])
 
         try:
-            self._motions.append(list(map(scaller.transform, self.global_deque)))
+            self._motions.append(
+                list(map(scaller.transform, self.global_deque)))
         except RuntimeError:
             return
 
     def _save_file(self) -> None:
         np.save(
-            f"training_data/motion_{self.motion_id}", np.array(self._motions))
+            f"training_data/{self.hand.lower()}/motion_{self.motion_id}", np.array(self._motions))
 
     def recording_loop(self) -> None:
         import pygame
@@ -217,8 +221,11 @@ class SingularMotionRecorder:
                         self._record_motion()
                     if recording >= 0:
                         recording -= 1
-                else:
+                elif not self.single_frame_motion:
                     self._record_motion()
+                else:
+                    self._motions.append(
+                        StandardScaler().fit_transform(self.global_deque[-1]))
 
                 print(clock.get_fps())
                 clock.tick(20)
@@ -239,14 +246,15 @@ if __name__ == "__main__":
                          for _ in range(20)], maxlen=20)
     )
     hand_motions = HandMotions(
-        0, ("models/model.h5", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
+        0, ("models/lhm3d.h5", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
     hand_motions.start_camera_loop()
 
     while True:
         print(hand_motions.status_right)
-        sleep(.25)
+        print(hand_motions.status_left)
+        sleep(.5)
 
     # x = deque([[(0.0, 0.0, 0.0) for _ in range(21)] for _ in range(20)], maxlen=20)
 
-    # recorder = SingularMotionRecorder(0, 2, True, "Right", x)
+    # recorder = SingularMotionRecorder(0, -1, False, True, "Left", x)
     # recorder.recording_loop()
