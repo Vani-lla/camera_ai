@@ -32,7 +32,6 @@ def get_data(hand: Literal["left", "right"], num: int) -> tuple[np.ndarray, np.n
     return X, Y
 
 
-
 def card_to_center_coordinates(card: dict, width_offset: int = 0, height_offset: int = 0, screen_height: int = 1080) -> tuple[int, int]:
     return (
         card["TopLeftX"] + card["Width"]//2 + width_offset,
@@ -47,3 +46,6 @@ def landmarks_from_index(ind: int, landmarks: list) -> list:
         return landmarks[0]
     else:
         return landmarks[ind]
+    
+if __name__ == "__main__":
+    print(get_data("left", 2)[0].shape)

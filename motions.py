@@ -56,15 +56,18 @@ class HandMotions:
         VisionRunningMode = mp.tasks.vision.RunningMode
 
         def result_callback(result, output_image, timestamp_ms) -> None:
-            for category in result.handedness:
-                if category[0].category_name == "Left":
+            for hand_landmarks, handedness in zip(result.hand_landmarks, result.handedness):
+                category = handedness[0]
+
+                if category.category_name == "Left":
                     global_hands.left_hand.append(list(
-                        (lm.x, lm.y, lm.z) for lm in landmarks_from_index(category[0].index, result.hand_landmarks)
+                        (lm.x, lm.y, lm.z) for lm in hand_landmarks
                     ))
-                elif category[0].category_name == "Right":
+                elif category.category_name == "Right":
                     global_hands.right_hand.append(list(
-                        (lm.x, lm.y, lm.z) for lm in landmarks_from_index(category[0].index, result.hand_landmarks)
+                        (lm.x, lm.y, lm.z) for lm in hand_landmarks
                     ))
+
         self._landmarker_options = HandLandmarkerOptions(
             base_options=BaseOptions(
                 model_asset_path="models/hand_landmarker.task"),
@@ -103,14 +106,28 @@ class HandMotions:
                     sleep(time_to_sleep)
 
     @property
-    def status_left(self) -> int:
-        data = np.array(self.global_hands.left_hand[-1]).flatten()
-        print(data)
-        return np.argmax(self._model_left([data], training=False))
+    def status(self) -> dict[str, dict[str, int | float]]:
+        data_left = np.array(self.global_hands.left_hand[-1]).reshape(-1, 63)
+        data_right = self.global_scaller.transform([self.global_hands.scalled_right_hand.flatten()]).reshape(1, -1)
 
-    @property
-    def status_right(self) -> int:
-        return np.argmax(self._model_right(self.global_scaller.transform([self.global_hands.scalled_right_hand.flatten()]).reshape(1, -1), training=False))
+        left_prediction = self._model_left(data_left, training=False)
+        right_prediction = self._model_right(data_right, training=False)
+
+        left_status = np.argmax(left_prediction)
+        right_status = np.argmax(right_prediction)
+
+        print(left_status, right_status)
+
+        return {
+            "left": {
+                "status": left_status,
+                "probability": left_prediction[0, left_status].numpy()
+            },
+            "right": {
+                "status": right_status,
+                "probability": right_prediction[0, right_status].numpy()
+            }
+        }
 
     def start_camera_loop(self) -> None:
         self._camera_thread.start()
@@ -246,13 +263,12 @@ if __name__ == "__main__":
                          for _ in range(20)], maxlen=20)
     )
     hand_motions = HandMotions(
-        0, ("models/lhm3d.h5", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
+        0, ("models/lhm3d.keras", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
     hand_motions.start_camera_loop()
 
     while True:
-        print(hand_motions.status_right)
-        print(hand_motions.status_left)
-        sleep(.5)
+        sleep(1)
+        print(hand_motions.status)
 
     # x = deque([[(0.0, 0.0, 0.0) for _ in range(21)] for _ in range(20)], maxlen=20)
 

@@ -2,15 +2,18 @@ from collections import deque
 from time import sleep
 import numpy as np
 import pyautogui
+from motions import HandMotions
 
 CONSTANTS = {
     "skip": (1668, 537),
 }
 
 
-class MouseControlleer:
+class MouseController:
     def __init__(self, screen_settings: dict[str, int]) -> None:
         self.screen_settings = screen_settings
+
+        self.status = (0, 0)
 
         self.hands_constant = .25
         self.center = .5
@@ -41,7 +44,7 @@ class MouseControlleer:
 
         distance = self.center - x
 
-        pyautogui.moveTo(, self.screen_settings["height"])
+        # pyautogui.moveTo(, self.screen_settings["height"])
 
     def mouse_coordinate(self):
         return pyautogui.position()
@@ -51,7 +54,7 @@ if __name__ == "__main__":
     import json
 
     with open("settings/settings.json", "r") as settings:
-        controller = MouseControlleer(json.load(settings)["screen"])
+        controller = MouseController(json.load(settings)["screen"])
 
     while True:
         print(controller.mouse_coordinate())
