@@ -3,8 +3,8 @@ from time import sleep
 from os import system
 import warnings
 
-from motions import HandLandmarks, HandMotions
-from helpers import SETTINGS, prepare_global_scaler
+from motions import HandMotions
+from helpers import SETTINGS
 from riot_api import Game
 from mouse_control import MouseController
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # Initialize classes
     # api = Game(SETTINGS["lor"]["port"])
     hand_motions = HandMotions(
-        0, ("models/lhm3d.keras", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
+        0, ("models/lhm3d.keras", "models/rhm3d.h5"), global_hand)
     controller = MouseController(SETTINGS["screen"])
 
     # Start loops
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     with warnings.catch_warnings(action="ignore"):
         while True: 
             system("cls")
-            status = hand_motions.status
+            status = hand_motions.generate_status()
             print(status)
 
             # Calibrating
@@ -44,7 +44,7 @@ if __name__ == "__main__":
             if status.probable_right == 1:
                 controller.next_turn()
 
-            elif status.probable_right == 2:
+            elif status.probable_right == 2 and status.probable_left == 1:
                 print(controller._get_current_selected_card(5, global_hand.pointed_fingers))
 
 

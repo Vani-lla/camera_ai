@@ -20,7 +20,7 @@
 *If you know what you are doing, this step is not necessary, but still recommended*
 
 ### Configuration
-Adjust settings accordung to section under
+Adjust settings according to section under
 
 ### How to run program
 ...
