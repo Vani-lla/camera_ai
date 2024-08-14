@@ -60,14 +60,14 @@ class Game:
     def enemy_player_bench(self) -> list[dict]:
         ...
 
-game = Game(21337, 1.0)
-game.start()
+# game = Game(21337, 1.0)
+# game.start()
 
-while True:
-    system("cls")
+# while True:
+#     system("cls")
 
-    game.show_all_cards()
+#     game.show_all_cards()
 
-    print(set(c["TopLeftY"] for c in game.card_json if c["LocalPlayer"]))
+#     print(set(c["TopLeftY"] for c in game.card_json if c["LocalPlayer"]))
 
-    sleep(1)
+#     sleep(1)

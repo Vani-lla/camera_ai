@@ -2,29 +2,27 @@ from collections import deque
 from time import sleep
 import numpy as np
 import pyautogui
-from helpers import CONSTANTS
+from helpers import CONSTANTS, SETTINGS
 from motions import HandMotions
 
 class MouseController:
     def __init__(self, screen_settings: dict[str, int]) -> None:
         self.screen_settings = screen_settings
 
-        self.status = (0, 0)
-
+        # Calibrating
+        self.calibrated = False
         self.hand_constant = .25
         self.center = .5
 
-        self.card_constraints = (0, 0)
-
     def _get_current_selected_card(self, num_of_cards: int, x: float) -> int:
-        x_ = abs(x - self.center + self.hand_constant)
+        x_ = abs(x - self.center + SETTINGS["program"]["hand_constant_length"]/2*self.hand_constant)
 
-        distance = 2*self.hand_constant/num_of_cards
+        distance = SETTINGS["program"]["hand_constant_length"]*self.hand_constant/num_of_cards
 
         return (x_//distance) % num_of_cards
 
-    def calibrate(self, hand: deque[tuple[float, float, float]]) -> None:
-        hand_x = hand[:, 0]
+    def calibrate(self, hand: list[tuple[float, float, float]]) -> None:
+        hand_x = np.array(hand)[:, 0]
 
         self.center = np.average(hand_x)
         self.hand_constant = np.max(hand_x) - np.min(hand_x)

@@ -1,6 +1,7 @@
 from collections import deque
-from json import load
 from time import sleep
+from os import system
+import warnings
 
 from motions import HandLandmarks, HandMotions
 from helpers import SETTINGS, prepare_global_scaler
@@ -19,17 +20,32 @@ if __name__ == "__main__":
     )
 
     # Initialize classes
-    api = Game(SETTINGS["lor"]["port"])
+    # api = Game(SETTINGS["lor"]["port"])
     hand_motions = HandMotions(
-        0, ("models/lhm3d.h5", "models/rhm3d.keras"), prepare_global_scaler(), global_hand)
+        0, ("models/lhm3d.keras", "models/rhm3d.h5"), prepare_global_scaler(), global_hand)
     controller = MouseController(SETTINGS["screen"])
 
     # Start loops
-    api.start()
+    # api.start()
     hand_motions.start_camera_loop()
+    
+    with warnings.catch_warnings(action="ignore"):
+        while True: 
+            system("cls")
+            status = hand_motions.status
+            print(status)
 
-    while True:
-        controller.status = hand_motions.status
-        
-        if hand_motions.status.probable_left == 0:
-            print("xD")
+            # Calibrating
+            if status.probable_left == 1:
+                controller.calibrate(global_hand.right_hand[-1])
+                print(controller.center, controller.hand_constant)
+
+            # Game control
+            if status.probable_right == 1:
+                controller.next_turn()
+
+            elif status.probable_right == 2:
+                print(controller._get_current_selected_card(5, global_hand.pointed_fingers))
+
+
+            sleep(.5)

@@ -4,10 +4,13 @@
     },
     "screen": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "width_offset": 0,
+        "height_offset": 0
     },
     "program": {
-        "fps": 5,
-        "confidence": 0.7
+        "fps": 10,
+        "confidence": 0.7,
+        "hand_constant_length": 3
     }
 }

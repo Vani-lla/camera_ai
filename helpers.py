@@ -48,8 +48,7 @@ def card_to_center_coordinates(card: dict, width_offset: int = 0, height_offset:
         screen_height - card["TopLeftY"] + card["Height"]//2 + height_offset
     )
 
-
-def normalized_to_px(x: float, y: float, width: int = 1920, height: int = 1080) -> tuple[int, int]:
+def normalized_to_px(x: float, y: float, width: int = SETTINGS["screen"]["width"], height: int = SETTINGS["screen"]["height"]) -> tuple[int, int]:
     return int((1-x)*width), int(y*height)
 
 

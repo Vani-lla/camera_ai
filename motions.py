@@ -10,7 +10,7 @@ from sklearn.discriminant_analysis import StandardScaler
 from time import sleep, time
 from threading import Thread, Event
 
-from helpers import SETTINGS, landmarks_from_index, normalized_to_px, prepare_global_scaler
+from helpers import SETTINGS, normalized_to_px, prepare_global_scaler
 
 
 @dataclass
@@ -32,6 +32,10 @@ class HandLandmarks:
 
         return np.array(list(map(scaller.transform, self.right_hand)))
 
+    @property
+    def pointed_fingers(self) -> float:
+        return (self.right_hand[-1][8][0] + self.right_hand[-1][12][0])/2
+
 
 @dataclass
 class Status:
@@ -43,11 +47,11 @@ class Status:
 
     @property
     def probable_left(self) -> int:
-        return self.left if self.left_probability > SETTINGS["programm"]["confidence"] else 0
+        return self.left if self.left_probability > SETTINGS["program"]["confidence"] else 0
 
     @property
     def probable_right(self) -> int:
-        return self.right if self.right_probability > SETTINGS["programm"]["confidence"] else 0
+        return self.right if self.right_probability > SETTINGS["program"]["confidence"] else 0
 
     def __repr__(self) -> str:
         return f"Left: {self.left} {self.left_probability}\t\t\tRight: {self.right} {self.right_probability}"
@@ -87,6 +91,7 @@ class HandMotions:
                     global_hands.right_hand.append(list(
                         (lm.x, lm.y, lm.z) for lm in hand_landmarks
                     ))
+            return timestamp_ms
 
         self._landmarker_options = HandLandmarkerOptions(
             base_options=BaseOptions(
@@ -115,6 +120,10 @@ class HandMotions:
 
                 # Frame processing
                 _, frame = self._camera.read()
+
+                cv2.imshow("camera", frame)
+                cv2.waitKey(5)
+
                 mp_image = mp.Image(
                     image_format=mp.ImageFormat.SRGB, data=cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
 
@@ -137,7 +146,7 @@ class HandMotions:
         left_status = np.argmax(left_prediction)
         right_status = np.argmax(right_prediction)
 
-        return Status(left_status, right_status, left_prediction[left_status], right_prediction[right_status])
+        return Status(left_status, right_status, left_prediction[0, left_status], right_prediction[0, right_status])
 
     def start_camera_loop(self) -> None:
         self._camera_thread.start()
@@ -146,7 +155,7 @@ class HandMotions:
         self._stop_event.set()
         self._camera_thread.join()
 
-
+# TODO: Make it better
 # class SingularMotionRecorder:
 #     def __init__(self, camera_id: int, motion_id: int, singular: bool, single_frame_motion: bool, hand: Literal["Left", "Right"], global_deque: deque[list[float, float, float]]) -> None:
 #         self.motion_id = motion_id
